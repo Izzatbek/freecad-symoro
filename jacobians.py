@@ -44,17 +44,16 @@ def serialKinematicJacobian(joints):
     Pend = Tend[0:3, 3]
 
     from numpy.matlib import zeros, identity, cross
-	#M: jacobian only includes moving joints
     jacobian = zeros((6, len(chain.get_mjoints())))
     T = identity(4)
     k = 0
     for jnt in chain.joints:
         T *= jnt.T
-		#M: Take P and a vectors
+		#Take P and a vectors
         P = T[0:3, 3]
         a = T[0:3, 2]
         if jnt.isrevolute():
-			#M: revolute: [ahat*(Pend-P), a]
+			#revolute: [ahat*(Pend-P), a]
             DP = Pend - P
             a_hat = zeros((3,3))
             a_hat[0, 1] = -a[2]
@@ -67,16 +66,16 @@ def serialKinematicJacobian(joints):
             #jacobian_trans = cross(P, DP, axis=0)
             jacobian_rot = a
         if jnt.isprismatic():
-			#M: prismatic: [a, 0]
+			#prismatic: [a, 0]
             jacobian_trans = a
             jacobian_rot = zeros((3, 1))
-		#M: skip fixed joints
+		#skip fixed joints
         if not(jnt.isfixed()):
             jacobian[:3, k] = jacobian_trans
             jacobian[3:, k] = jacobian_rot
             k += 1
     # If the last joint is fixed, apply the Jacobian transposition
-    if (joints[-1].isfixed()):
+    if (joints[-1].isfixed() and not joints[-1].sameas == None):
         P = jnt.T[0:3, 2]
         jac_transposition = identity(6)
         jac_transposition[3, 1] = -P[2]
@@ -97,19 +96,21 @@ def serialKinematicJacobianPassive(joints):
     joints are considered to be fixed. The end joint is the last joint in
     the list and the base joint is its farest antecedent.
     """
-    from copy import copy
+    from copy import deepcopy
     from joint import ACTUATED_JOINT, FIXED_JOINT
 
-    joints = copy(joints)
+    ch_joints = deepcopy(joints)
 
-    for jnt in joints:
+    for jnt in ch_joints:
         if jnt.ispassive():
-            jnt.sigma = ACTUATED_JOINT
+            # HERE was sigma instead
+            jnt.mu = ACTUATED_JOINT
         else:
             jnt.sigma = FIXED_JOINT
 
     # Jacobians with passive and actuated joints
-    jac_all = serialKinematicJacobian(joints)
+    jac_all = serialKinematicJacobian(ch_joints)
+
     # List of indexes of passive joints
-    p_indexes = [i for i, jnt in enumerate(joints) if jnt.ispassive()]
-    return jac_all[:, p_indexes]
+    #p_indexes = [i for i, jnt in enumerate(joints) if jnt.ispassive()]
+    return jac_all

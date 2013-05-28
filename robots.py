@@ -98,3 +98,20 @@ table_sr400 = (
     (3, 9, 0, FIXED_JOINT,
         pi / 2, 0, 0, -d8, 0, 0),  # 10
         )
+
+table_testloop_r4 = (
+    # antecedant, sameas, mu, sigma,
+    #   gamma, b, alpha, d, theta, r
+    (0, 0, 0, FIXED_JOINT,
+        0, 0, 0, 0, 0, 0),              # 1
+    (1, 0, AJOINT, REVOLUTE_JOINT,
+        0, 0, 0, 0, 0, 0),              # 2
+    (2, 0, PJOINT, REVOLUTE_JOINT,
+        0, 0, 0, 100, 0, 0),            # 3
+    (1, 0, PJOINT, REVOLUTE_JOINT,
+        0, 0, 0, 100, 0, 0),            # 4
+    (3, 0, PJOINT, REVOLUTE_JOINT,
+        0, 0, 0, 100, 0, 0),            # 5
+    (4, 5, 0, FIXED_JOINT,
+        pi/2, 0, 0, 100, 0, 0)          # 6
+)

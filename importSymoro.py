@@ -30,7 +30,7 @@ from FreeCAD import Base
 import Part
 from kinematics import Kinematics
 
-from robots import table_rx90 as table
+from robots import table_testloop_r4 as table
 
 # Parameters for the graphical representation
 d_rev = 20

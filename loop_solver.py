@@ -121,10 +121,11 @@ class LoopSolver():
         # TODO: also allow that self.end has attribute sameas not None by
         # finding the joint which has sameas equal to the given end.
         if not(self.end.sameas is None):
-            return False
+			if not(self.end.sameas in self.joints and self.end.sameas.sameas is self.end):
+				return False
         check_ok = False
         for jnt in self.joints:
-            if (jnt.sameas is self.end):
+            if jnt.sameas is self.end:
                 check_ok = True
                 break
         # TODO: put this check somewhere else
@@ -211,9 +212,9 @@ class LoopSolver():
         from jacobians import serialKinematicJacobianPassive as jacobian
 
         n_endjoints = len(self.chains)
-        from  serialmechanism import n_pjoints
+        from serialmechanism import n_pjoints
         n_pjnts = n_pjoints(l_from_l_of_l(self.pjoints))
-        J = zeros((6 * n_endjoints, n_pjnts))
+        J = zeros((6 * (n_endjoints - 1), n_pjnts))
 
         # Put J0 more times in the first columns.
         J0 = jacobian(self.chains[0])
@@ -225,16 +226,17 @@ class LoopSolver():
         # of J.
         np = n_pjoints0
         for i in range(1, n_endjoints):
-            npi = len(self.chains[i])
+            npi = n_pjoints(self.chains[i]) # MAYBE HERE should be # of passive joints
             Ji = jacobian(self.chains[i])
-            J[(6 * i):(6 * i + 6), np:(np + npi)] = -Ji
+            J[(6 * (i - 1)):(6 * i), np:(np + npi)] = -Ji
             np += npi
         return J
 
     def set_dq_pjoints(self, dq):
         pjoints = l_from_l_of_l(self.pjoints)
-        for jnt in pjoints:
-            jnt.q += dq
+        for i in range(len(pjoints)):
+            jnt = pjoints[i]
+            jnt.q += dq[i, 0]
             # TODO: remainder by 2 * pi and check limits.
             # Beware not to limit revolute joints if (q +/- 2*pi) would be
             # within the limits.
@@ -243,6 +245,8 @@ class LoopSolver():
         kmax = 10
         jmax = 100
         dpos_min = 1e-5
+
+        #from numpy.linalg import pinv
 
         for k in range(kmax):
             print('Initial values set number: {0}/{1}'.format(k, kmax))
@@ -263,4 +267,5 @@ class LoopSolver():
                 # et inversement, alors qu'il faudrait avoir but pour nouveau
                 # X0 c'est atteindre nouveau X1.
                 dq = ((J.T * J) ** -1) * J.T * dx
+                #dq = pinv(J) * dx
                 self.set_dq_pjoints(dq)
